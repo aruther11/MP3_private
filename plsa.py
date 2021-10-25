@@ -34,7 +34,7 @@ class Corpus(object):
         self.document_topic_prob = None  # P(z | d)
         self.topic_word_prob = None  # P(w | z)
         self.topic_prob = None  # P(z | d, w)
-
+        self.number_of_topics = 0
         self.number_of_documents = 0
         self.vocabulary_size = 0
 
@@ -121,7 +121,7 @@ class Corpus(object):
         """ Call the functions to initialize the matrices document_topic_prob and topic_word_prob
         """
         print("Initializing...")
-
+        self.number_of_topics = number_of_topics
         if random:
             self.initialize_randomly(number_of_topics)
         else:
@@ -131,7 +131,7 @@ class Corpus(object):
         """ The E-step updates P(z | w, d)
         """
         print("E step:")
-        
+        self.topic_prob = np.ones((self.number_of_documents,self.number_of_topics,self.vocabulary_size))
         cur_doc_num = 0
         cur_vocab_num = 0
         while cur_doc_num < self.number_of_documents:
@@ -141,7 +141,7 @@ class Corpus(object):
                 self.topic_prob[cur_vocab_num,:,cur_doc_num] = probability
 
                 cur_vocab_num = cur_vocab_num + 1
-            self.topic_prob = normalize(self.topic_prob[cur_doc_num,:])
+            
             cur_doc_num = cur_doc_num + 1
             
 
@@ -154,7 +154,7 @@ class Corpus(object):
         cur_topic_num = 0
         cur_vocab_num = 0
         cur_doc_num = 0
-        while cur_topic_num < self.num_of_topics:
+        while cur_topic_num < number_of_topics:
             while cur_vocab_num < self.vocabulary_size:
                 total = 0
                 while cur_doc_num < self.number_of_documents:
@@ -170,17 +170,17 @@ class Corpus(object):
         cur_vocab_num = 0
         cur_doc_num = 0
         while cur_doc_num < self.number_of_documents:
-            while cur_topic_num < self.num_of_topics:
+            while cur_topic_num < number_of_topics:
                 total = 0
                 while cur_vocab_num < self.vocabulary_size:
                     total = total + self.term_doc_matrix[cur_doc_num][cur_vocab_num] + self.topic_prob[cur_doc_num, cur_topic_num, cur_vocab_num]
                     cur_vocab_num= cur_vocab_num + 1
-                self.topic_word_prob[cur_topic_num][cur_vocab_num] = total 
+                self.document_topic_prob[cur_doc_num][cur_topic_num] = total 
 
-                self.document_word_prob[cur_topic_num][cur_vocab_num] = total
+                
                 cur_topic_num = cur_topic_num + 1
             cur_doc_num = cur_doc_num + 1   
-        self.document_word_prob = normalize(self.document_word_prob)                
+        self.document_topic_prob = normalize(self.document_topic_prob)                
         
         
 
@@ -197,10 +197,10 @@ class Corpus(object):
         cur_doc_num = 0
         
         while cur_doc_num < self.number_of_documents - 1:
-            while cur_topic_num < self.num_of_topics :
+            while cur_topic_num < number_of_topics :
                 total = 0
                 while cur_vocab_num < self.vocabulary_size - 1:
-                    total = total + (self.topic_prob[cur_doc_num, cur_topic_num, cur_vocab_num] * self.topic_word_prob[cur_topic_num,cur_vocab_num] * self.term_doc_matrix[cur_doc_num,cur_vocab_num])
+                    total = (self.topic_prob[cur_doc_num, cur_topic_num, cur_vocab_num])
                     cur_vocab_num = cur_vocab_num + 1
                 total = np.log(total) + total
                 cur_topic_num = cur_topic_num + 1
@@ -235,9 +235,7 @@ class Corpus(object):
             self.maximization_step(number_of_topics)
             self.calculate_likelihood(number_of_topics)
 
-            cur_likelihood = self.likelihoods[len(self.likelihoods) - 1]
-            if abs(cur_likelihood - self.likelihoods) <= epsilon :
-                break 
+            
 
 
 
